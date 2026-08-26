@@ -29,6 +29,9 @@ jobs:
           - name: buid image
             run: docker build -t talel12/back-session18:v${{github.run_number}} .
 
+          - name: tag latest image
+            run: docker tag talel12/back-session18:v${{github.run_number}} talel12/back-session18:latest
+
           - name: check image
             run: docker images
 
@@ -40,4 +43,7 @@ jobs:
 
           - name: push image
             run: docker push talel12/back-session18:v${{github.run_number}}
+
+          - name: push latest image
+            run: docker push talel12/back-session18:latest
     # deploy
