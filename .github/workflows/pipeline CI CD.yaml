@@ -23,5 +23,14 @@ jobs:
         runs-on: ubuntu-latest
         needs: unit-test
         steps:
-          - run: docker --version
+          - name: clone repo
+            uses: actions/checkout@v7
+
+          - name: buid image
+            run: docker build -t talel12/back-session18 .
+
+          - name: check image
+            run: docker images
+
+            
     # deploy
