@@ -19,4 +19,9 @@ jobs:
               run: npm run test
 
     # Build docker image
+    build-docker-image:
+        runs-on: ubuntu-latest
+        needs: unit-test
+        steps:
+          - run: docker --version
     # deploy
