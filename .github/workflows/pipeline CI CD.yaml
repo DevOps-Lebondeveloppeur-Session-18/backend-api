@@ -27,7 +27,7 @@ jobs:
             uses: actions/checkout@v7
 
           - name: buid image
-            run: docker build -t talel12/back-session18:v2 .
+            run: docker build -t talel12/back-session18:v${{github.run_number}} .
 
           - name: check image
             run: docker images
