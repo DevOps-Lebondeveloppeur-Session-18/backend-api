@@ -12,7 +12,11 @@ jobs:
             - name: clone repo
               uses: actions/checkout@v7
 
-            - run: ls -la
+            - name: install dep
+              run: npm i
+
+            - name: test
+              run: npm run test
 
     # Build docker image
     # deploy
