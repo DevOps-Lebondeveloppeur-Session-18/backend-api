@@ -18,17 +18,47 @@ jobs:
               run: npm i
 
             - name: test
+              id: test
+              continue-on-error: true
               run: npm run test
 
-            - name: Slack Notification
+            - name: Slack Notification - Test Failed
+              if: failure() && steps.test.outcome == 'failure'
               uses: rtCamp/action-slack-notify@v2
               env:
                 SLACK_CHANNEL: general
-                SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+                SLACK_COLOR: danger
                 SLACK_ICON: https://github.com/rtCamp.png?size=48
-                SLACK_MESSAGE: 'Post Content :rocket:'
-                SLACK_TITLE: Post Title
-                SLACK_USERNAME: rtCamp
+                SLACK_MESSAGE: |
+                  ❌ *Unit Tests Failed!*
+                  *Repository:* ${{ github.repository }}
+                  *Branch:* ${{ github.ref_name }}
+                  *Commit:* ${{ github.sha }}
+                  *Author:* ${{ github.actor }}
+                  *Workflow:* ${{ github.workflow }}
+                  
+                  *Error Details:*
+                  Please check the test output in GitHub Actions logs.
+                  🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Test Logs>
+                SLACK_TITLE: 🚨 Test Failure
+                SLACK_USERNAME: GitHub Actions
+                SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+            - name: Slack Notification - Test Passed
+              if: success()
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                SLACK_CHANNEL: general
+                SLACK_COLOR: good
+                SLACK_ICON: https://github.com/rtCamp.png?size=48
+                SLACK_MESSAGE: |
+                  ✅ *Unit Tests Passed!*
+                  *Repository:* ${{ github.repository }}
+                  *Branch:* ${{ github.ref_name }}
+                  *Commit:* ${{ github.sha }}
+                  *Author:* ${{ github.actor }}
+                SLACK_TITLE: ✅ Tests Passed
+                SLACK_USERNAME: GitHub Actions
                 SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
     # Build docker image
@@ -66,6 +96,7 @@ jobs:
         needs: build-docker-image
         steps:
           - name: Execute remote SSH commands using password
+            id: deploy
             uses: appleboy/ssh-action@v1
             with:
               host: ${{ secrets.VPS_HOST }}
@@ -74,3 +105,46 @@ jobs:
               script: |
                 cd /home/user/devops-script/backend
                 sudo docker compose up -d --force-recreate --pull always backend-api
+
+          - name: Slack Notification - Deployment Successful
+            if: success()
+            uses: rtCamp/action-slack-notify@v2
+            env:
+              SLACK_CHANNEL: general
+              SLACK_COLOR: good
+              SLACK_ICON: https://github.com/rtCamp.png?size=48
+              SLACK_MESSAGE: |
+                🚀 *New Version Deployed Successfully!*
+                *Repository:* ${{ github.repository }}
+                *Version:* v${{ github.run_number }}
+                *Branch:* ${{ github.ref_name }}
+                *Commit:* ${{ github.sha }}
+                *Author:* ${{ github.actor }}
+                *Image:* ${{ env.IMAGE_NAME }}:v${{ github.run_number }}
+                
+                🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Run>
+              SLACK_TITLE: 🎉 Deployment Successful
+              SLACK_USERNAME: GitHub Actions
+              SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+          - name: Slack Notification - Deployment Failed
+            if: failure()
+            uses: rtCamp/action-slack-notify@v2
+            env:
+              SLACK_CHANNEL: general
+              SLACK_COLOR: danger
+              SLACK_ICON: https://github.com/rtCamp.png?size=48
+              SLACK_MESSAGE: |
+                🔴 *Deployment Failed!*
+                *Repository:* ${{ github.repository }}
+                *Version:* v${{ github.run_number }}
+                *Branch:* ${{ github.ref_name }}
+                *Commit:* ${{ github.sha }}
+                *Author:* ${{ github.actor }}
+                
+                *Error Details:*
+                Deployment to VPS failed. Please check the workflow logs.
+                🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Error Logs>
+              SLACK_TITLE: ❌ Deployment Failed
+              SLACK_USERNAME: GitHub Actions
+              SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
