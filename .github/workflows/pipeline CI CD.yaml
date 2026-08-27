@@ -22,6 +22,18 @@ jobs:
               continue-on-error: true
               run: npm run test
 
+            - name: Check test status
+              id: check_status
+              if: always()
+              run: |
+                if [ "${{ steps.test.outcome }}" == "failure" ]; then
+                  echo "test_status=failed" >> $GITHUB_OUTPUT
+                  echo "Test failed"
+                else
+                  echo "test_status=passed" >> $GITHUB_OUTPUT
+                  echo "Test passed"
+                fi
+
             - name: Slack Notification - Test Failed
               if: failure() && steps.test.outcome == 'failure'
               uses: rtCamp/action-slack-notify@v2
