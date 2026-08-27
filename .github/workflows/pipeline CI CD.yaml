@@ -35,7 +35,7 @@ jobs:
                 fi
 
             - name: Slack Notification - Test Failed
-              if: failure() && steps.test.outcome == 'failure'
+              if: steps.check_status.outputs.test_status == 'failed'
               uses: rtCamp/action-slack-notify@v2
               env:
                 SLACK_CHANNEL: general
