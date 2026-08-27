@@ -1,5 +1,8 @@
 name: Test & deploy
 
+env:
+  IMAGE_NAME: ${{ vars.DOCKERHUB_USERNAME }}/back-session18
+
 on:
     push:
         branches: main
@@ -17,6 +20,17 @@ jobs:
             - name: test
               run: npm run test
 
+            - name: Slack Notification
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                SLACK_CHANNEL: general
+                SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+                SLACK_ICON: https://github.com/rtCamp.png?size=48
+                SLACK_MESSAGE: 'Post Content :rocket:'
+                SLACK_TITLE: Post Title
+                SLACK_USERNAME: rtCamp
+                SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
     # Build docker image
     build-docker-image:
         runs-on: ubuntu-latest
@@ -26,10 +40,10 @@ jobs:
             uses: actions/checkout@v7
 
           - name: buid image
-            run: docker build -t talel12/back-session18:v${{github.run_number}} .
+            run: docker build -t ${{env.IMAGE_NAME}}:v${{github.run_number}} .
 
           - name: tag latest image
-            run: docker tag talel12/back-session18:v${{github.run_number}} talel12/back-session18:latest
+            run: docker tag ${{env.IMAGE_NAME}}:v${{github.run_number}} ${{env.IMAGE_NAME}}:latest
 
           - name: check image
             run: docker images
@@ -41,10 +55,10 @@ jobs:
               password: ${{ secrets.DOCKERHUB_TOKEN }}
 
           - name: push image
-            run: docker push talel12/back-session18:v${{github.run_number}}
+            run: docker push ${{env.IMAGE_NAME}}:v${{github.run_number}}
 
           - name: push latest image
-            run: docker push talel12/back-session18:latest
+            run: docker push ${{env.IMAGE_NAME}}:latest
 
     # deploy
     deploy:
